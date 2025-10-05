@@ -1,0 +1,62 @@
+# MoEFsDiC 默认配置文件
+# 用于控制模型架构和训练参数
+
+# 模型基础配置
+model:
+  in_channels: 3              # 输入通道数（RGB图像）
+  model_channels: 128         # 基础通道数
+  channel_mults: [1, 2, 4, 8] # 通道倍数（每层）
+  t_dim: 512                  # 时间嵌入维度
+  c_dim: 512                  # 条件嵌入维度
+
+# MoE 配置
+moe:
+  enabled: true               # MoE 主开关 (true/false)
+  num_experts: 8              # 专家数量 N_exp
+  k_active: 2                 # Top-K 激活专家数量
+
+# 频率域模块配置
+freq:
+  enabled: true               # F-Module 主开关 (true/false)
+
+# 训练配置
+train:
+  # 损失函数
+  lambda_load: 0.01           # 负载均衡损失权重
+  
+  # 优化器
+  learning_rate: 1.0e-4       # 学习率
+  weight_decay: 0.0           # 权重衰减
+  
+  # 训练参数
+  batch_size: 16              # 批次大小
+  num_epochs: 100             # 训练轮数
+  
+  # 架构选项
+  use_dsconv_global: true     # 全局使用 DS-Conv (true/false)
+                              # 影响 DiC 基线速度
+  
+  # 数据
+  image_size: 64              # 图像尺寸
+  num_classes: 10             # 类别数量
+  
+  # 日志和检查点
+  log_interval: 100           # 日志打印间隔（步数）
+  save_interval: 1000         # 模型保存间隔（步数）
+  checkpoint_dir: "./checkpoints"  # 检查点保存目录
+
+# 扩散过程配置
+diffusion:
+  num_timesteps: 1000         # 扩散步数
+  beta_start: 0.0001          # 起始 beta
+  beta_end: 0.02              # 结束 beta
+  schedule: "linear"          # beta 调度策略 (linear/cosine)
+
+# 消融实验配置
+# 通过修改这些配置可以进行不同的消融实验：
+# 1. 禁用 MoE: moe.enabled = false (使用 Dilated_Fusion_Block)
+# 2. 禁用频率模块: freq.enabled = false
+# 3. 禁用 DS-Conv: train.use_dsconv_global = false
+# 4. 调整专家数量: moe.num_experts = [4, 8, 16, ...]
+# 5. 调整 Top-K: moe.k_active = [1, 2, 4, ...]
+

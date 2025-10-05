@@ -1,0 +1,80 @@
+# MoEFsDiC 超分辨率默认配置
+# [SR 专用] Super-Resolution 任务配置
+
+# 模型基础配置
+model:
+  in_channels: 3              # 输入通道数（RGB图像）
+  model_channels: 128         # 基础通道数
+  channel_mults: [1, 2, 4, 8] # 通道倍数（每层）
+  t_dim: 512                  # 时间嵌入维度
+  c_dim: 512                  # 条件嵌入维度
+
+# MoE 配置
+moe:
+  enabled: true               # MoE 主开关 (true/false)
+  num_experts: 8              # 专家数量 N_exp
+  k_active: 2                 # Top-K 激活专家数量
+
+# 频率域模块配置
+freq:
+  enabled: true               # F-Module 主开关 (true/false)
+
+# [SR 专用配置]
+sr:
+  scale_factor: 4             # 超分倍数 (2x, 4x, 8x)
+  lr_channels: 64             # LR 图像潜在空间的通道数
+  # LR 特征将在每个 U-Net 块中与主特征融合
+
+# 训练配置
+train:
+  # 损失函数
+  lambda_load: 0.01           # 负载均衡损失权重
+  
+  # 优化器
+  learning_rate: 2.0e-4       # 学习率（SR 任务通常略高）
+  weight_decay: 0.0           # 权重衰减
+  
+  # 训练参数
+  batch_size: 8               # 批次大小（SR 显存消耗更大）
+  num_epochs: 200             # 训练轮数
+  
+  # 架构选项
+  use_dsconv_global: true     # 全局使用 DS-Conv (true/false)
+  
+  # 数据
+  hr_size: 256                # HR 图像尺寸 (scale_factor × lr_size)
+  lr_size: 64                 # LR 图像尺寸
+  num_classes: 10             # 类别数量（如果使用条件生成）
+  
+  # 日志和检查点
+  log_interval: 50            # 日志打印间隔（步数）
+  save_interval: 1000         # 模型保存间隔（步数）
+  checkpoint_dir: "./checkpoints_sr"  # 检查点保存目录
+  
+  # 验证
+  val_interval: 500           # 验证间隔
+  num_val_images: 8           # 验证图像数量
+
+# 扩散过程配置
+diffusion:
+  num_timesteps: 1000         # 扩散步数
+  beta_start: 0.0001          # 起始 beta
+  beta_end: 0.02              # 结束 beta
+  schedule: "linear"          # beta 调度策略 (linear/cosine)
+  
+  # SR 特定采样参数
+  sampling_timesteps: 250     # 采样步数（可以少于训练步数）
+  ddim_eta: 0.0               # DDIM 参数
+
+# 数据增强配置
+augmentation:
+  random_flip: true           # 随机翻转
+  random_crop: true           # 随机裁剪
+  color_jitter: false         # 颜色抖动
+
+# SR 任务说明:
+# 1. LR 图像作为强制性条件输入到每个 U-Net 块
+# 2. 模型预测的是 HR 图像空间的噪声
+# 3. 最终通过扩散采样生成高清图像
+# 4. Router 会根据 LR 内容（边缘、平滑区域等）动态选择专家
+
